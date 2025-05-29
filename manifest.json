@@ -1,0 +1,20 @@
+{
+	"name": "Call Forwarding",
+	"short_name": "Call Forwarding",
+	"start_url": "index.html",
+	"display": "standalone",
+	"scope": ".",
+	"description": "A PWA to manage call forwarding.",
+	"icons":[
+		{
+			"src": "icon192.png",                      
+			"sizes": "192x192",
+			"type": "image/png"
+		},
+		{
+			"src": "icon512.png",
+			"sizes": "512x512",
+			"type": "image/png"
+		}
+	]
+}

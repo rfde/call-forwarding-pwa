@@ -1,0 +1,298 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<link rel="manifest" href="manifest.json" />
+		<link rel="icon" href="icon.svg" sizes="any" type="image/svg+xml" />
+		<title>Call Forwarding</title>
+		<style>
+			body {
+				font-family: sans-serif;
+				background-color: #e0e0e0;
+			}
+			body, select, button, input, label {
+				font-size: 1.2em;
+			}
+			select, input, button.w100 {
+				width: 100%;
+			}
+			.w80 {
+				width: 79%;
+			}
+			.w20 {
+				width: 19%;
+			}
+			input, label {
+				display: block;
+			}
+			button, select#delay {
+				padding: .5em;
+				appearance: none;
+				border: 1px solid rgba(27, 31, 35, .15);
+				border-radius: 6px;
+				box-shadow: rgba(27, 31, 35, .1) 0 1px 0;
+				cursor: pointer;
+				/*font-weight: 600;*/
+				line-height: 20px;
+				text-align: center;
+				user-select: none;
+			}
+			button:hover, select#delay:hover {
+				filter: brightness(85%);
+			}
+			button:disabled, select#delay:disabled {
+				background-color: #ccc !important;
+				filter: none !important;
+				cursor: default;
+			}
+			div.group {
+				background-color: #fff;
+				border: 2px solid #000;
+				padding: .5em;
+				margin-top: 0;
+				margin-bottom: 1em;
+			}
+			div.group:last-child {
+				margin-bottom: 0;
+			}
+			span.grouplabel {
+				background-color: #000;
+				color: #fff;
+				padding: 0 .2em;
+				margin-bottom: 0;
+				font-weight: bold;
+			}
+			p.btn {
+				margin: .4em 0;
+			}
+			p.btn:first-child, p.btn:last-child {
+				margin: 0;
+			}
+			div.set button, div.set select {
+				background-color: #CDEE69;
+			}
+			div.unset button {
+				background-color: #E09690;
+			}
+			div.query button {
+				background-color: #9CD9F0;
+			}
+			div.innergroup {
+				margin: 1em 0 ;
+				padding: 0;
+			}
+			span.remark {
+				font-size: .8em;
+				color: #888;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Call Forwarding</h1>
+		
+		<span class="grouplabel">☎️ Set forwarding rule</span>
+		<div class="group ">
+			<input
+				id="destination"
+				placeholder="Destination"
+				pattern="\+?\d+"
+				oninput="updateUrls()"
+				type="tel"
+				autocomplete="off"
+			/>
+			<span class="remark">Type any phone number in international format (e.g., +49151...) or select a preset below.</span>
+			<div class="innergroup">
+				<span class="grouplabel">Presets</span>
+				<div class="group">
+					<select
+						id="presets"
+						size="5"
+						oninput="usePreset(this)"
+					>
+					</select>
+					<button title="Add preset" onclick="addPreset()">&CirclePlus;</button>
+					<button title="Remove preset" onclick="removeSelectedPreset()">&CircleMinus;</button>
+					<button title="Move selected preset up" onclick="moveSelectedPreset(true)">&wedge;</button>
+					<button title="Move selected preset down" onclick="moveSelectedPreset(false)">&vee;</button>
+					<br />
+					<span class="remark">Custom presets are stored locally in your browser and never transmitted to the server.</span>
+				</div>
+			</div>
+			<div class="set">
+				<p class="btn">
+					<a id="a_fwd_after" href="#"><button id="btn_fwd_after" disabled autocomplete="off" class="w80">Conditional: Not answered after</button></a>
+					<select
+						disabled
+						autocomplete="off"
+						class="w20"
+						id="delay"
+						onchange="updateUrls(); storeDelay();"
+					>
+						<option value="5">5s</option>
+						<option value="10">10s</option>
+						<option value="15">15s</option>
+						<option value="20" selected>20s</option>
+						<option value="25">25s</option>
+						<option value="30">30s</option>
+					</select>
+				</p>
+				<p class="btn">
+					<a id="a_fwd_oor" href="#"><button id="btn_fwd_oor" disabled autocomplete="off" class="w100">Conditional: Out of reach</button></a>
+				</p>
+				<p class="btn">
+					<a id="a_fwd_busy" href="#"><button id="btn_fwd_busy" disabled autocomplete="off" class="w100">Conditional: Busy</button></a>
+				</p>
+				<p class="btn">
+					<a id="a_fwd_all_cond" href="#"><button id="btn_fwd_all_cond" disabled autocomplete="off" class="w100">All conditional</button></a>
+				</p>
+				<p class="btn">
+					<a id="a_fwd_uncond" href="#"><button id="btn_fwd_uncond" disabled autocomplete="off" class="w100">Unconditional</button></a>
+				</p>
+			</div>
+		</div>
+
+		<span class="grouplabel">📵 Unset forwarding rule</span>
+		<div class="group unset">
+			<p class="btn"><a href="tel:%23%2361%23"><button class="w100">Conditional: Not answered after $delay</button></a></p>
+			<p class="btn"><a href="tel:%23%2362%23"><button class="w100">Conditional: Out of reach</button></a></p>
+			<p class="btn"><a href="tel:%23%2367%23"><button class="w100">Conditional: Busy</button></a></p>
+			<p class="btn"><a href="tel:%23%23004%23"><button class="w100">All conditional</button></a></p>
+			<p class="btn"><a href="tel:%23%2321%23"><button class="w100">Unconditional</button></a></p>
+			<p class="btn"><a href="tel:%23%23002%23"><button class="w100">All (conditional and unconditional)</button></a></p>
+		</div>
+
+		<span class="grouplabel">❓ Query forwarding rule status</span>
+		<div class="group query">
+			<p class="btn"><a href="tel:*%2361%23"><button class="w100">Conditional: Not answered after $delay</button></a></p>
+			<p class="btn"><a href="tel:*%2362%23"><button class="w100">Conditional: Out of reach</button></a></p>
+			<p class="btn"><a href="tel:*%2367%23"><button class="w100">Conditional: Busy</button></a></p>
+			<p class="btn"><a href="tel:*%23004%23"><button class="w100">All conditional</button></a></p>
+			<p class="btn"><a href="tel:*%2321%23"><button class="w100">Unconditional</button></a></p>
+		</div>
+
+		<script>
+			const presetSelect = document.getElementById("presets");
+			const delaySelect = document.getElementById("delay");
+			const destinationInput = document.getElementById("destination");
+			const defaultPresets = [
+				{ "text": "4712 (DTAG Voicemail Prepaid)", "value": "4712" },
+			];
+
+			function updatePresetsInLocalStorage() {
+				let presets = [];
+				for (const option of presetSelect.options) {
+					presets.push({
+						"text": option.text,
+						"value": option.value
+					});
+				}
+				localStorage.setItem("presets", JSON.stringify(presets));
+			}
+
+			function addPreset() {
+				const value = prompt('Enter PHONE NO:');
+				if (! value) {
+					return;
+				}
+				const label = prompt('Enter LABEL:');
+				let text = label ? value + " (" + label + ")" : value;
+
+				let option = document.createElement("option");
+				option.text = text;
+				option.value = value;
+				presetSelect.add(option);
+
+				updatePresetsInLocalStorage();
+			}
+
+			function populatePresetSelect() {
+				presetSelect.innerHTML = "";
+				let presets = JSON.parse(localStorage.getItem("presets"));
+				if ( ! presets) {
+					presets = defaultPresets;
+				}
+				for (const preset of presets) {
+					let option = document.createElement("option");
+					option.text = preset["text"];
+					option.value = preset["value"];
+					presetSelect.add(option);
+				}
+			}
+
+			function moveSelectedPreset(up) {
+				let current = presetSelect.querySelector("option:checked");
+				if ( ! current) {
+					return;
+				}
+				if (up && current.previousElementSibling) {
+					current.parentNode.insertBefore(current, current.previousElementSibling);
+				} else if ( ! up && current.nextElementSibling) {
+					current.parentNode.insertBefore(current.nextElementSibling, current);
+				} else {
+					return;
+				}
+				updatePresetsInLocalStorage();
+			}
+
+			function removeSelectedPreset() {
+				let current = presetSelect.querySelector("option:checked");
+				if (current) {
+					current.remove();
+				}
+				updatePresetsInLocalStorage();
+			}
+
+			function usePreset(sender) {
+				destinationInput.value = sender.value;
+				updateUrls();
+			}
+
+			function storeDelay() {
+				localStorage.setItem("delay", delaySelect.options.selectedIndex);
+			}
+			
+			function restoreDelay() {
+				const stored_delay = localStorage.getItem("delay");
+				if (stored_delay) {
+					delaySelect.options.selectedIndex = stored_delay;
+				}
+			}
+
+			function updateUrls() {
+				function setButtons(enabled) {
+					document.getElementById("btn_fwd_after").disabled = ! enabled;
+					document.getElementById("delay").disabled = ! enabled;
+					document.getElementById("btn_fwd_oor").disabled = ! enabled;
+					document.getElementById("btn_fwd_busy").disabled = ! enabled;
+					document.getElementById("btn_fwd_all_cond").disabled = ! enabled;
+					document.getElementById("btn_fwd_uncond").disabled = ! enabled;
+				}
+				const delay = delaySelect.querySelector("option:checked").value;
+				const destination = destinationInput.value;
+				if ( ! destination) {
+					setButtons(false);
+					return;
+				}
+				
+				document.getElementById("a_fwd_after").href    = "tel:**61*" + destination + "**" + delay + "%23";
+				document.getElementById("a_fwd_oor").href      = "tel:**62*" + destination + "%23";
+				document.getElementById("a_fwd_busy").href     = "tel:**67*" + destination + "%23";
+				document.getElementById("a_fwd_all_cond").href = "tel:**004*" + destination + "**" + delay + "%23";
+				document.getElementById("a_fwd_uncond").href   = "tel:**21*" + destination + "%23";
+				setButtons(true);
+			}
+
+			populatePresetSelect();
+			restoreDelay();
+		</script>
+		<!-- PWA -->
+		<script>
+			if ("serviceWorker" in navigator) {
+				window.addEventListener("load", () => {
+					navigator.serviceWorker.register("serviceworker.js")
+				});
+			}
+		</script>
+	</body>
+</html>
